@@ -1,6 +1,7 @@
 import { Toolbar } from "./components/Toolbar";
 import { Thumbnails } from "./components/Thumbnails";
 import { Viewer } from "./components/Viewer";
+import { OcrProgressModal } from "./components/OcrProgressModal";
 import "./App.css";
 
 export default function App() {
@@ -11,6 +12,7 @@ export default function App() {
         <Thumbnails />
         <Viewer />
       </div>
+      <OcrProgressModal />
     </div>
   );
 }

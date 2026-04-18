@@ -3,6 +3,7 @@ import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
 import { PDFDocument, StandardFonts, degrees, rgb } from "pdf-lib";
 import type { Annotation } from "./annotations";
+import type { OcrPage } from "./ocr";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
@@ -131,17 +132,19 @@ function hexToRgb(hex: string) {
 }
 
 /**
- * Bake in-memory annotations into the PDF bytes. Annotations are keyed by
- * pageId (our stable identity); pageIds maps current position → pageId.
- * Coordinate convention inside the app is top-left (pdfjs). pdf-lib uses
- * bottom-left, so we flip y against each page's height.
+ * Bake in-memory annotations and any OCR text layer into the PDF bytes.
+ * Annotations are keyed by pageId (our stable identity); pageIds maps
+ * current position → pageId. Coordinate convention inside the app is
+ * top-left (pdfjs). pdf-lib uses bottom-left, so we flip y against each
+ * page's height.
  */
 export async function flattenAnnotations(
   bytes: Uint8Array,
   annotations: Annotation[],
   pageIds: number[],
+  ocrResults: OcrPage[] = [],
 ): Promise<Uint8Array> {
-  if (annotations.length === 0) return bytes;
+  if (annotations.length === 0 && ocrResults.length === 0) return bytes;
   const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
   const font = await doc.embedFont(StandardFonts.Helvetica);
 
@@ -217,6 +220,28 @@ export async function flattenAnnotations(
         width: sig.width,
         height: sig.height,
       });
+    }
+  }
+
+  // OCR text layer — draw each recognized word at its bbox with opacity 0
+  // so the PDF renders visually unchanged but text is selectable/searchable.
+  if (ocrResults.length > 0) {
+    for (const ocrPage of ocrResults) {
+      const pageIdx = pageIds.indexOf(ocrPage.pageId);
+      if (pageIdx < 0) continue;
+      const page = doc.getPage(pageIdx);
+      const { height } = page.getSize();
+      for (const w of ocrPage.words) {
+        const size = Math.max(1, w.size);
+        page.drawText(w.text, {
+          x: w.x,
+          y: height - w.y - w.h,
+          size,
+          font,
+          color: rgb(0, 0, 0),
+          opacity: 0,
+        });
+      }
     }
   }
 

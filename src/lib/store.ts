@@ -19,6 +19,18 @@ import {
   imagesToPdf,
   type ImageFormat,
 } from "./convert";
+import { runOcrOnDoc, type OcrPage, type OcrSummary } from "./ocr";
+
+function buildOcrNotice(summary: OcrSummary): string {
+  const { ocrdPages, skippedPages } = summary;
+  if (ocrdPages.length === 0 && skippedPages.length > 0) {
+    return `All ${skippedPages.length} pages already contain selectable text — nothing to OCR.`;
+  }
+  if (ocrdPages.length > 0 && skippedPages.length === 0) {
+    return `OCR added a text layer to ${ocrdPages.length} page${ocrdPages.length === 1 ? "" : "s"}. Save to bake it in.`;
+  }
+  return `OCR added a text layer to ${ocrdPages.length} page${ocrdPages.length === 1 ? "" : "s"}; skipped ${skippedPages.length} that already had text. Save to bake in.`;
+}
 import {
   loadSignatures,
   persistSignatures,
@@ -97,6 +109,16 @@ interface PdfState {
   exportImages: (format: ImageFormat) => Promise<void>;
   exportText: () => Promise<void>;
   imagesToPdfDialog: () => Promise<void>;
+
+  // Phase 6: OCR
+  ocrResults: OcrPage[];
+  ocrProgress: { pageIndex: number; pageTotal: number; message: string } | null;
+  ocrSkippedPages: number[]; // pages that were not OCR'd because they already had text
+  ocrOcrdPages: number[];    // pages that were OCR'd on the most recent run
+  notice: string | null;      // transient success/info message
+  runOcr: () => Promise<void>;
+  clearOcr: () => void;
+  dismissNotice: () => void;
 }
 
 async function reloadDoc(
@@ -133,6 +155,11 @@ export const usePdfStore = create<PdfState>((set, get) => ({
   strokeWidth: 2,
   signatures: loadSignatures(),
   pendingSignatureId: null,
+  ocrResults: [],
+  ocrProgress: null,
+  ocrSkippedPages: [],
+  ocrOcrdPages: [],
+  notice: null,
 
   openFromDialog: async () => {
     set({ loading: true, error: null });
@@ -218,6 +245,8 @@ export const usePdfStore = create<PdfState>((set, get) => ({
       annotations: [],
       selectedAnnotationId: null,
       tool: "select",
+      ocrResults: [],
+      ocrProgress: null,
     });
   },
 
@@ -482,9 +511,15 @@ export const usePdfStore = create<PdfState>((set, get) => ({
     }
     set({ busy: true, error: null });
     try {
-      const out = await flattenAnnotations(bytes, annotations, pageIds);
+      const out = await flattenAnnotations(bytes, annotations, pageIds, get().ocrResults);
       await writePdf(filePath, out);
-      set({ bytes: out, annotations: [], dirty: false, busy: false });
+      set({
+        bytes: out,
+        annotations: [],
+        ocrResults: [],
+        dirty: false,
+        busy: false,
+      });
     } catch (e) {
       set({ busy: false, error: e instanceof Error ? e.message : String(e) });
     }
@@ -503,11 +538,12 @@ export const usePdfStore = create<PdfState>((set, get) => ({
         set({ busy: false });
         return;
       }
-      const out = await flattenAnnotations(bytes, annotations, pageIds);
+      const out = await flattenAnnotations(bytes, annotations, pageIds, get().ocrResults);
       await writePdf(target, out);
       set({
         bytes: out,
         annotations: [],
+        ocrResults: [],
         filePath: target,
         dirty: false,
         busy: false,
@@ -563,6 +599,49 @@ export const usePdfStore = create<PdfState>((set, get) => ({
       set({ busy: false, error: e instanceof Error ? e.message : String(e) });
     }
   },
+
+  runOcr: async () => {
+    const { doc, pageIds } = get();
+    if (!doc) return;
+    set({
+      ocrProgress: {
+        pageIndex: 0,
+        pageTotal: doc.numPages,
+        message: "Starting OCR…",
+      },
+      error: null,
+      notice: null,
+    });
+    try {
+      const summary = await runOcrOnDoc(doc, pageIds, (info) =>
+        set({ ocrProgress: info }),
+      );
+      const notice = buildOcrNotice(summary);
+      set({
+        ocrResults: summary.results,
+        ocrOcrdPages: summary.ocrdPages,
+        ocrSkippedPages: summary.skippedPages,
+        ocrProgress: null,
+        dirty: summary.results.length > 0 ? true : get().dirty,
+        notice,
+      });
+    } catch (e) {
+      set({
+        ocrProgress: null,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
+  },
+
+  clearOcr: () =>
+    set({
+      ocrResults: [],
+      ocrOcrdPages: [],
+      ocrSkippedPages: [],
+      notice: null,
+    }),
+
+  dismissNotice: () => set({ notice: null }),
 
   imagesToPdfDialog: async () => {
     set({ busy: true, error: null });

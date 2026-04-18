@@ -23,6 +23,11 @@ export function Toolbar() {
     exportImages,
     exportText,
     imagesToPdfDialog,
+    runOcr,
+    ocrResults,
+    clearOcr,
+    notice,
+    dismissNotice,
   } = usePdfStore();
 
   const exportBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -150,6 +155,20 @@ export function Toolbar() {
       )}
 
       <div className="toolbar-group">
+        {hasDoc && (
+          <button
+            onClick={ocrResults.length > 0 ? clearOcr : runOcr}
+            disabled={busy}
+            title={
+              ocrResults.length > 0
+                ? "Remove pending OCR text layer"
+                : "Run OCR to make this PDF searchable"
+            }
+            className={ocrResults.length > 0 ? "active" : undefined}
+          >
+            {ocrResults.length > 0 ? "OCR ✓" : "OCR"}
+          </button>
+        )}
         <button
           ref={exportBtnRef}
           onClick={openExportMenu}
@@ -172,6 +191,11 @@ export function Toolbar() {
           items={exportItems}
           onClose={() => setExportMenu(null)}
         />
+      )}
+      {notice && (
+        <div className="toolbar-notice" onClick={dismissNotice} title="Click to dismiss">
+          {notice}
+        </div>
       )}
     </header>
   );

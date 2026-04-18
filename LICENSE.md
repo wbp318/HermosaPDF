@@ -1,6 +1,6 @@
 # HERMOSAPDF SOFTWARE LICENSE AGREEMENT
 
-**Copyright © 2026 William Brooks Parker. All rights reserved.**
+**Copyright © 2024 William Brooks Parker. All rights reserved.**
 
 William Brooks Parker (“Licensor”) is a natural person domiciled in
 East Carroll Parish, Louisiana, United States of America. This Software

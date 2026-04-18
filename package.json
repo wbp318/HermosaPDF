@@ -1,7 +1,10 @@
 {
-  "name": "pdf-to-pretty",
+  "name": "hermosa-pdf",
   "private": true,
   "version": "0.1.0",
+  "description": "HermosaPDF — personal PDF editing suite by Levee Line Research LLC",
+  "author": "Levee Line Research LLC",
+  "license": "SEE LICENSE IN LICENSE.md",
   "type": "module",
   "scripts": {
     "dev": "vite",

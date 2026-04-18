@@ -2,4 +2,4 @@
 
 fn main() {
     hermosa_pdf_lib::run()
-}
+}})

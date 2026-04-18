@@ -39,7 +39,9 @@
       "Bash(mkdir -p test-fixtures)",
       "Bash(node scripts/generate-test-agreement.mjs)",
       "Bash(gh repo *)",
-      "Skill(claude-api)"
+      "Skill(claude-api)",
+      "Bash(git tag *)",
+      "Bash(gh release create v0.1.0 --title 'HermosaPDF v0.1.0' --notes ' *)"
     ]
   }
 }

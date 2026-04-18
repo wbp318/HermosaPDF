@@ -1,25 +1,55 @@
 # HermosaPDF
 
-A personal PDF editing suite — a desktop app covering what Adobe Acrobat does:
-text/image editing, page organization, conversion to/from PDF, e-signatures, OCR,
-and AI-assisted document analysis.
+Personal PDF editing suite — a desktop app that covers what Adobe Acrobat does,
+wearing a Windows 98 skin with phosphor-green accents.
 
-> Prior Python scripts are preserved under [archive/](archive/).
+[![Release](https://img.shields.io/badge/release-v0.1.0-0a8a3a)](https://github.com/wbp318/HermosaPDF/releases/tag/v0.1.0)
+
+> The original Python scripts that used to live in this repo are preserved under [archive/](archive/).
+
+## Install
+
+Grab the latest installer from the [**v0.1.0 release**](https://github.com/wbp318/HermosaPDF/releases/tag/v0.1.0):
+
+- **`HermosaPDF_0.1.0_x64-setup.exe`** (NSIS) — smaller, recommended for personal install
+- **`HermosaPDF_0.1.0_x64_en-US.msi`** (MSI) — for group-policy / enterprise deploy
+
+The installer is unsigned, so Windows SmartScreen may warn on first run —
+*More info → Run anyway*.
+
+## Features
+
+- **Organize** — rotate, delete, insert blank, extract, merge, split, and
+  drag-reorder pages. Each page keeps a stable identity label so thumbnails
+  stay readable after moves.
+- **Annotate** — freehand draw, text boxes, sticky notes, and e-signatures
+  (draw / type / upload) with Konva-based resize handles. Annotations
+  flatten into the PDF on save.
+- **Convert** — PDF ↔ images (PNG/JPEG), PDF → text, bundle images into a PDF.
+- **OCR** — Tesseract.js with a pre-scan that skips pages that already have
+  selectable text. Output is an invisible text layer, not a duplicate.
+- **AI (Claude)** — summarize, Q&A against the doc, extract fields to JSON,
+  flag PII. Model tier selector defaults to Haiku 4.5; pick Sonnet 4.6 or
+  Opus 4.7 when needed. Prompt caching on the document block.
+- **Encrypted PDF support** — every open round-trips through Rust's `lopdf`
+  so owner-password PDFs and malformed XRefs just work.
+- **Win98 chrome** — custom title bar, menu bar, status bar, chunky
+  scrollbars, phosphor-green highlights.
 
 ## Stack
 
 - **Tauri v2** — Rust backend, system WebView2 on Windows
 - **React 19 + TypeScript + Vite** — UI
 - **pdfjs-dist** — rendering
-- **pdf-lib** — page manipulation
-- **lopdf (Rust)** — decryption and structural normalization
+- **pdf-lib** — page manipulation + flatten
+- **lopdf** *(Rust)* — decryption + structural normalization
+- **konva** + **react-konva** — annotation overlay
+- **tesseract.js** — OCR
+- **@anthropic-ai/sdk** — Claude API
+- **keyring** *(Rust)* — OS-keychain storage for the Anthropic key
 - **zustand** — state management
-- **tesseract.js** *(later)* — OCR
-- **@anthropic-ai/sdk** *(later)* — AI features via Claude
 
 ## Architecture
-
-Data flows left to right:
 
 ```
 [Disk .pdf]
@@ -35,84 +65,89 @@ Data flows left to right:
      │                        │
      ▼                        ▼
 [Canvas (Viewer +         [New bytes → pdfjs reload]
- Thumbnails)]                  │
-                               ▼
+ Thumbnails +                  │
+ Konva annotations)]           ▼
                          [writeFile save]
 ```
 
-### Frontend (React + TypeScript)
+### Frontend
 
-- [index.html](index.html) — Vite entry document
-- [src/main.tsx](src/main.tsx) — React bootstrap with StrictMode
-- [src/App.tsx](src/App.tsx) — top-level layout
-- [src/App.css](src/App.css) — global styles (dark theme)
+- **Chrome**
+  - [index.html](index.html) · [src/main.tsx](src/main.tsx) · [src/App.tsx](src/App.tsx) · [src/App.css](src/App.css)
+  - [src/components/TitleBar.tsx](src/components/TitleBar.tsx) — custom Win98 title bar (decorations off)
+  - [src/components/MenuBar.tsx](src/components/MenuBar.tsx) — File / Edit / View / Tools / Help
+  - [src/components/StatusBar.tsx](src/components/StatusBar.tsx) — bottom strip with state / page / zoom / filename
+- **Viewer & editing**
+  - [src/components/Toolbar.tsx](src/components/Toolbar.tsx) — open / save / page nav / zoom / merge / split / OCR / export / AI toggle
+  - [src/components/Thumbnails.tsx](src/components/Thumbnails.tsx) — left sidebar with hover actions, right-click menu, drag-reorder
+  - [src/components/Viewer.tsx](src/components/Viewer.tsx) — main page render + Konva overlay
+  - [src/components/ContextMenu.tsx](src/components/ContextMenu.tsx) — shared menu component
+  - [src/components/AnnotationLayer.tsx](src/components/AnnotationLayer.tsx) — Konva stage on top of the page
+  - [src/components/AnnotationTools.tsx](src/components/AnnotationTools.tsx) — select / freehand / text / sticky / sign
+  - [src/components/SignatureModal.tsx](src/components/SignatureModal.tsx) — draw / type / upload + saved library
+  - [src/components/OcrProgressModal.tsx](src/components/OcrProgressModal.tsx)
+  - [src/components/AiPanel.tsx](src/components/AiPanel.tsx) — Summary / Q&A / Extract / Redact tabs
+  - [src/components/ApiKeyModal.tsx](src/components/ApiKeyModal.tsx)
+- **Library**
+  - [src/lib/pdf.ts](src/lib/pdf.ts) — pdfjs + pdf-lib helpers; flatten on save
+  - [src/lib/store.ts](src/lib/store.ts) — zustand state + all edit actions
+  - [src/lib/annotations.ts](src/lib/annotations.ts) — types + signature persistence
+  - [src/lib/convert.ts](src/lib/convert.ts) — PDF↔image + PDF→text + images→PDF
+  - [src/lib/ocr.ts](src/lib/ocr.ts) — Tesseract runner + pre-scan
+  - [src/lib/ai.ts](src/lib/ai.ts) — Claude wrapper (summarize / ask / extract / redact)
+  - [src/lib/keyboard.ts](src/lib/keyboard.ts) — global shortcuts
+  - [src/lib/devtools.ts](src/lib/devtools.ts) — inspect/reload menu items
 
-**Components**
-- [src/components/Toolbar.tsx](src/components/Toolbar.tsx) — Open / Save / Save As / Close / page nav / zoom / Merge / Insert blank
-- [src/components/Thumbnails.tsx](src/components/Thumbnails.tsx) — left sidebar with per-page hover actions and right-click menu
-- [src/components/Viewer.tsx](src/components/Viewer.tsx) — main page render area + right-click menu
-- [src/components/ContextMenu.tsx](src/components/ContextMenu.tsx) — custom context menu (dismisses on outside click / Escape)
+### Rust side
 
-**Library code**
-- [src/lib/pdf.ts](src/lib/pdf.ts) — pdfjs + pdf-lib helpers (render, clone-on-transfer, rotate/delete/insert/merge/extract/reorder)
-- [src/lib/store.ts](src/lib/store.ts) — zustand store owning doc, bytes, dirty flag, and all edit actions
-- [src/lib/devtools.ts](src/lib/devtools.ts) — `invoke('open_devtools')` wrapper + shared dev menu items
+- [src-tauri/src/main.rs](src-tauri/src/main.rs)
+- [src-tauri/src/lib.rs](src-tauri/src/lib.rs) — Tauri builder, plugin registration
+- [src-tauri/src/pdfops.rs](src-tauri/src/pdfops.rs) — `pdf_decrypt`, `pdf_is_encrypted`, `open_devtools`
+- [src-tauri/src/ai.rs](src-tauri/src/ai.rs) — `ai_set_api_key`, `ai_get_api_key`, `ai_clear_api_key` (via `keyring`)
+- [src-tauri/tauri.conf.json](src-tauri/tauri.conf.json)
+- [src-tauri/capabilities/default.json](src-tauri/capabilities/default.json)
+- [src-tauri/.cargo/config.toml](src-tauri/.cargo/config.toml) — pinned MSVC linker on Windows
 
-### Backend (Rust, Tauri)
+See [CLAUDE.md](CLAUDE.md) for the architecture invariants and Windows-specific
+gotchas, and [PLAN.md](PLAN.md) for what's shipped vs deferred.
 
-- [src-tauri/src/main.rs](src-tauri/src/main.rs) — binary entry
-- [src-tauri/src/lib.rs](src-tauri/src/lib.rs) — Tauri builder, plugin registration, command handler
-- [src-tauri/src/pdfops.rs](src-tauri/src/pdfops.rs) — Tauri commands: `pdf_decrypt`, `pdf_is_encrypted`, `open_devtools`
-- [src-tauri/Cargo.toml](src-tauri/Cargo.toml) — Rust crate manifest
-- [src-tauri/tauri.conf.json](src-tauri/tauri.conf.json) — window config, bundle identifier, icons
-- [src-tauri/capabilities/default.json](src-tauri/capabilities/default.json) — plugin permissions (dialog, fs, core)
-- [src-tauri/.cargo/config.toml](src-tauri/.cargo/config.toml) — pins MSVC linker path on Windows
+## Run from source
 
-### Root config
-
-- [package.json](package.json) — npm scripts, JS deps
-- [vite.config.ts](vite.config.ts) — Vite / HMR config (port 1420, ignores src-tauri)
-- [tsconfig.json](tsconfig.json) — TypeScript strict mode, React JSX
-- [.gitattributes](.gitattributes) — language detection, line-ending rules, vendored paths
-
-### Encryption handling
-
-Every opened PDF is round-tripped through [pdf_decrypt](src-tauri/src/pdfops.rs) before
-the JS layer sees it. `lopdf` transparently decrypts owner-password-only PDFs (empty
-password) and normalizes the structure so `pdf-lib` can edit without choking on
-non-standard XRef tables. Password-protected PDFs fall through to a native prompt
-in [openFromDialog](src/lib/store.ts).
-
-## Prerequisites (Windows)
+### Prerequisites (Windows)
 
 1. Node.js 20+
 2. Rust via [rustup](https://www.rust-lang.org/learn/get-started)
-3. Visual Studio 2022 Build Tools with the "Desktop development with C++" workload
+3. Visual Studio 2022 Build Tools with "Desktop development with C++" workload
 4. Windows 11 SDK (install via the VS Installer if not already present)
 
-## Develop
+### Develop
 
 ```bash
 npm install
 npm run tauri dev
 ```
 
-The first `tauri dev` compiles the Rust dependencies (including lopdf); subsequent runs are fast.
+First `tauri dev` compiles the Rust dependencies (including lopdf + keyring);
+subsequent runs are fast.
 
-## Build a release
+### Build the installer yourself
 
 ```bash
 npm run tauri build
 ```
 
-Produces a Windows installer under `src-tauri/target/release/bundle/`.
+Output: `src-tauri/target/release/bundle/nsis/*.exe` and `bundle/msi/*.msi`.
 
 ## Roadmap
 
 1. ✅ Phase 1 — PDF viewer with thumbnails, open/close, zoom, paging
-2. Phase 2 — Page ops: rotate, delete, insert blank, extract, merge are done; reorder and split still to do
-3. Phase 3 — Annotations + text/image editing
-4. Phase 4 — E-signatures (draw/type/upload, place, flatten)
-5. Phase 5 — File conversion (PDF ↔ images, Word/HTML → PDF)
-6. Phase 6 — OCR (Tesseract, searchable-PDF output)
-7. Phase 7 — AI document analysis (Claude: summarize, Q&A, extract, redact)
+2. ✅ Phase 2 — Page ops (rotate, delete, insert, extract, merge, split, reorder)
+3. ✅ Phase 3a — Freehand / text / sticky annotations + flatten on save
+4. ✅ Phase 4 — E-signatures (draw / type / upload, resize, flatten)
+5. ✅ Phase 5a — PDF ↔ images, PDF → text, images → PDF
+6. ✅ Phase 6 — OCR via Tesseract with pre-scan
+7. ✅ Phase 7 — AI document analysis (Claude summarize / Q&A / extract / redact)
+
+**Deferred / nice-to-have** — see [PLAN.md](PLAN.md): text-selection highlight
+layer (Phase 3b), Word/HTML → PDF (Phase 5b), multi-select thumbnails,
+interactive redaction UI, code signing, auto-update.

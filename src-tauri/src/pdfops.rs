@@ -34,3 +34,12 @@ pub fn pdf_is_encrypted(bytes: Vec<u8>) -> Result<bool, String> {
     let doc = Document::load_mem(&bytes).map_err(|e| format!("load: {e}"))?;
     Ok(doc.is_encrypted())
 }
+
+/// Open WebView devtools for the current window. Only does anything in debug builds.
+#[tauri::command]
+pub fn open_devtools(window: tauri::WebviewWindow) {
+    #[cfg(debug_assertions)]
+    window.open_devtools();
+    #[cfg(not(debug_assertions))]
+    let _ = window;
+}

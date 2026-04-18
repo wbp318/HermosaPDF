@@ -3,6 +3,7 @@ import clsx from "clsx";
 import { usePdfStore } from "../lib/store";
 import { renderPageToCanvas } from "../lib/pdf";
 import { ContextMenu, type MenuItem } from "./ContextMenu";
+import { devMenuItems } from "../lib/devtools";
 
 const THUMB_SCALE = 0.2;
 
@@ -134,6 +135,7 @@ export function Thumbnails() {
           danger: true,
           disabled: busy || numPages <= 1,
         },
+        ...devMenuItems(),
       ]
     : [];
 

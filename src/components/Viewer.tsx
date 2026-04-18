@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePdfStore } from "../lib/store";
 import { renderPageToCanvas } from "../lib/pdf";
 import { ContextMenu, type MenuItem } from "./ContextMenu";
+import { devMenuItems } from "../lib/devtools";
 
 export function Viewer() {
   const doc = usePdfStore((s) => s.doc);
@@ -85,6 +86,7 @@ export function Viewer() {
       danger: true,
       disabled: busy || numPages <= 1,
     },
+    ...devMenuItems(),
   ];
 
   return (

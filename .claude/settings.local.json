@@ -33,7 +33,9 @@
       "Bash(rm -f dev.log)",
       "Bash(grep -vE \"^\\\\s*$|Compiling|Building|Running|^\\\\s*\\\\|\")",
       "Bash(git remote *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }

@@ -8,6 +8,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             pdfops::pdf_decrypt,
             pdfops::pdf_is_encrypted,
+            pdfops::open_devtools,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

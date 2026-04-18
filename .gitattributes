@@ -1,0 +1,63 @@
+# Line endings — normalize to LF on checkin, respect OS on checkout
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Explicit language tagging so GitHub linguist counts everything
+*.rs      linguist-language=Rust         text
+*.ts      linguist-language=TypeScript   text
+*.tsx     linguist-language=TSX          text
+*.js      linguist-language=JavaScript   text
+*.jsx     linguist-language=JSX          text
+*.mjs     linguist-language=JavaScript   text
+*.cjs     linguist-language=JavaScript   text
+*.json    linguist-language=JSON         text
+*.jsonc   linguist-language=JSON         text
+*.toml    linguist-language=TOML         text
+*.yaml    linguist-language=YAML         text
+*.yml     linguist-language=YAML         text
+*.md      linguist-language=Markdown     text linguist-detectable=true
+*.markdown linguist-language=Markdown    text linguist-detectable=true
+*.html    linguist-language=HTML         text
+*.htm     linguist-language=HTML         text
+*.css     linguist-language=CSS          text
+*.scss    linguist-language=SCSS         text
+*.sass    linguist-language=Sass         text
+*.py      linguist-language=Python       text
+*.sh      linguist-language=Shell        text eol=lf
+*.bash    linguist-language=Shell        text eol=lf
+*.zsh     linguist-language=Shell        text eol=lf
+*.svg     linguist-language=SVG          text
+
+# Ship these as detectable even though GitHub usually hides them
+*.lock    linguist-generated=false       linguist-detectable=false
+package-lock.json linguist-generated=true
+Cargo.lock        linguist-generated=true
+
+# Vendored / third-party / sample assets — don't inflate language stats
+node_modules/**   linguist-vendored
+dist/**           linguist-generated
+src-tauri/target/** linguist-generated
+archive/**        linguist-vendored
+
+# Binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.icns binary
+*.pdf  binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.zip   binary
+*.gz    binary
+*.tar   binary
+*.7z    binary
+*.exe   binary
+*.dll   binary
+*.dylib binary
+*.so    binary

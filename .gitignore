@@ -41,6 +41,10 @@ credentials.json
 .openai/
 .claude-tool/
 
+# Claude Code per-user permission allowlist — machine-specific, never share.
+# If we later want a shared Claude config, .claude/settings.json can stay.
+.claude/settings.local.json
+
 # === Editor / IDE cruft ===
 .vscode/*
 !.vscode/extensions.json

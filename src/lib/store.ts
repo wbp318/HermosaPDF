@@ -13,7 +13,13 @@ import {
   flattenAnnotations,
   type PDFDocumentProxy,
 } from "./pdf";
-import type { Annotation, Tool } from "./annotations";
+import {
+  loadSignatures,
+  persistSignatures,
+  type Annotation,
+  type SignatureAsset,
+  type Tool,
+} from "./annotations";
 
 async function normalizePdfBytes(bytes: Uint8Array, password?: string): Promise<Uint8Array> {
   // Round-trip through Rust (lopdf) to decrypt if needed and normalize the
@@ -56,6 +62,13 @@ interface PdfState {
   setSelectedAnnotation: (id: string | null) => void;
   setAnnotationColor: (c: string) => void;
   setStrokeWidth: (w: number) => void;
+
+  // Signature library + pending placement
+  signatures: SignatureAsset[];
+  pendingSignatureId: string | null;
+  addSignature: (a: SignatureAsset) => void;
+  removeSignature: (id: string) => void;
+  setPendingSignature: (id: string | null) => void;
 
   openFromDialog: () => Promise<void>;
   setPage: (n: number) => void;
@@ -107,6 +120,8 @@ export const usePdfStore = create<PdfState>((set, get) => ({
   selectedAnnotationId: null,
   annotationColor: "#ff3b30",
   strokeWidth: 2,
+  signatures: loadSignatures(),
+  pendingSignatureId: null,
 
   openFromDialog: async () => {
     set({ loading: true, error: null });
@@ -222,6 +237,32 @@ export const usePdfStore = create<PdfState>((set, get) => ({
   setSelectedAnnotation: (id) => set({ selectedAnnotationId: id }),
   setAnnotationColor: (c) => set({ annotationColor: c }),
   setStrokeWidth: (w) => set({ strokeWidth: Math.max(0.5, Math.min(20, w)) }),
+
+  addSignature: (sig) =>
+    set((s) => {
+      const next = [...s.signatures, sig];
+      persistSignatures(next);
+      return { signatures: next };
+    }),
+
+  removeSignature: (id) =>
+    set((s) => {
+      const next = s.signatures.filter((x) => x.id !== id);
+      persistSignatures(next);
+      return {
+        signatures: next,
+        pendingSignatureId: s.pendingSignatureId === id ? null : s.pendingSignatureId,
+      };
+    }),
+
+  setPendingSignature: (id) =>
+    set((s) => {
+      if (id && !s.signatures.find((x) => x.id === id)) return {};
+      return {
+        pendingSignatureId: id,
+        tool: id ? "sign" : s.tool === "sign" ? "select" : s.tool,
+      };
+    }),
 
   deletePage: async (pageIndex) => {
     const { bytes, doc, currentPage, numPages, pageIds } = get();

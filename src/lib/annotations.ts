@@ -3,7 +3,27 @@
 // identity) not to the current slot index, so reorders/deletes don't
 // dislodge them from their page.
 
-export type Tool = "select" | "freehand" | "text" | "sticky";
+export type Tool = "select" | "freehand" | "text" | "sticky" | "sign";
+
+export interface SignatureAsset {
+  id: string;
+  name: string;
+  dataUrl: string; // PNG data URL
+  nativeWidth: number;
+  nativeHeight: number;
+  createdAt: number;
+}
+
+export interface SignatureAnnotation {
+  type: "signature";
+  id: string;
+  pageId: number;
+  x: number;
+  y: number;
+  width: number; // in PDF points
+  height: number;
+  dataUrl: string;
+}
 
 export interface FreehandAnnotation {
   type: "freehand";
@@ -35,7 +55,35 @@ export interface StickyAnnotation {
   color: string;
 }
 
-export type Annotation = FreehandAnnotation | TextAnnotation | StickyAnnotation;
+export type Annotation =
+  | FreehandAnnotation
+  | TextAnnotation
+  | StickyAnnotation
+  | SignatureAnnotation;
+
+export const SIGNATURE_STORAGE_KEY = "hermosapdf.signatures";
+
+export function loadSignatures(): SignatureAsset[] {
+  if (typeof localStorage === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(SIGNATURE_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed;
+  } catch {
+    return [];
+  }
+}
+
+export function persistSignatures(sigs: SignatureAsset[]): void {
+  if (typeof localStorage === "undefined") return;
+  try {
+    localStorage.setItem(SIGNATURE_STORAGE_KEY, JSON.stringify(sigs));
+  } catch {
+    // quota / disabled storage — skip
+  }
+}
 
 export function newId(): string {
   return `a_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;

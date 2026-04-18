@@ -193,6 +193,33 @@ export async function flattenAnnotations(
     }
   });
 
+  // Signatures: embed PNGs and drawImage. Keep the per-page loop simple by
+  // doing it as a second pass so the async embed doesn't interleave with
+  // the synchronous drawing ops above.
+  for (let idx = 0; idx < doc.getPageCount(); idx++) {
+    const page = doc.getPage(idx);
+    const pageId = pageIds[idx];
+    if (pageId === undefined) continue;
+    const sigs = annotations.filter(
+      (a): a is Extract<Annotation, { type: "signature" }> =>
+        a.type === "signature" && a.pageId === pageId,
+    );
+    if (sigs.length === 0) continue;
+    const { height } = page.getSize();
+    for (const sig of sigs) {
+      const base64 = sig.dataUrl.split(",")[1];
+      if (!base64) continue;
+      const binary = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+      const embed = await doc.embedPng(binary);
+      page.drawImage(embed, {
+        x: sig.x,
+        y: height - sig.y - sig.height,
+        width: sig.width,
+        height: sig.height,
+      });
+    }
+  }
+
   return doc.save();
 }
 

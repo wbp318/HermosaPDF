@@ -1067,3 +1067,157 @@ select:focus {
   background: var(--accent);
   color: #fff;
 }
+
+/* ---------- Title bar (custom, decorations:false) ---------- */
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding: 2px 2px 2px 4px;
+  background: linear-gradient(90deg, var(--accent-lo) 0%, var(--accent) 100%);
+  color: #fff;
+  user-select: none;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--accent-lo);
+}
+
+.titlebar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: var(--win-face);
+  border: 1px solid var(--accent-lo);
+  color: var(--accent-lo);
+  font-family: "Courier New", monospace;
+  font-weight: bold;
+  font-size: 12px;
+  margin-right: 6px;
+  line-height: 1;
+}
+
+.titlebar-icon-glyph {
+  line-height: 1;
+}
+
+.titlebar-title {
+  flex: 1;
+  font-size: 12px;
+  font-weight: bold;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.02em;
+  padding: 0 4px;
+}
+
+.titlebar-controls {
+  display: flex;
+  gap: 2px;
+}
+
+.titlebar-btn {
+  background: var(--win-face);
+  color: var(--win-text);
+  border: 2px solid;
+  border-color: var(--win-face-hi) var(--win-face-xsh) var(--win-face-xsh) var(--win-face-hi);
+  width: 20px;
+  height: 18px;
+  padding: 0;
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.titlebar-btn:active {
+  border-color: var(--win-face-xsh) var(--win-face-hi) var(--win-face-hi) var(--win-face-xsh);
+}
+
+.titlebar-btn.close:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+.tb-glyph {
+  line-height: 1;
+  position: relative;
+  top: -1px;
+}
+
+/* ---------- Menu bar ---------- */
+
+.menubar {
+  display: flex;
+  align-items: center;
+  background: var(--win-face);
+  padding: 2px 4px;
+  gap: 1px;
+  border-bottom: 1px solid var(--win-face-xsh);
+  box-shadow: 0 1px 0 var(--win-face-hi) inset;
+  flex-shrink: 0;
+  font-size: 12px;
+  user-select: none;
+}
+
+.menubar-btn {
+  background: transparent;
+  color: var(--win-text);
+  border: 1px solid transparent;
+  padding: 2px 8px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.menubar-btn:hover,
+.menubar-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid var(--accent-lo);
+}
+
+.menubar-accel {
+  text-decoration: underline;
+}
+
+/* ---------- Status bar ---------- */
+
+.statusbar {
+  display: flex;
+  align-items: stretch;
+  background: var(--win-face);
+  padding: 2px;
+  gap: 2px;
+  border-top: 1px solid var(--win-face-hi);
+  box-shadow: 0 -1px 0 var(--win-face-sh) inset;
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
+.statusbar-cell {
+  padding: 1px 6px;
+  border: 2px solid;
+  border-color: var(--win-face-xsh) var(--win-face-hi) var(--win-face-hi) var(--win-face-xsh);
+  background: var(--win-face);
+  color: var(--win-text);
+  font-family: inherit;
+  min-width: 60px;
+  display: flex;
+  align-items: center;
+}
+
+.statusbar-cell.grow {
+  flex: 1;
+}
+
+.statusbar-cell.name {
+  max-width: 30ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--win-text-dim);
+}

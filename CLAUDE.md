@@ -94,4 +94,4 @@ If a PDF still fails after `lopdf`, the next escalation is `pdfium-render` (Goog
 
 ## Roadmap status
 
-Phases 1–2 complete (viewer, page ops). Phase 3a complete (freehand / text / sticky annotations with flatten-on-save). Next: text-selection highlight (needs pdfjs text layer), image insertion, then Phase 4 e-signatures. Phases 5 (conversion), 6 (OCR), 7 (Claude) pending.
+All seven phases shipped: viewer, page ops, annotations, e-signatures, conversion, OCR, Claude AI. Polish pass (custom Win98 title bar, menu bar, status bar, global keyboard shortcuts) is the current session. See [PLAN.md](PLAN.md) for what's next / deferred / nice-to-have.

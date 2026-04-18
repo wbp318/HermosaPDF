@@ -14,6 +14,12 @@ import {
   type PDFDocumentProxy,
 } from "./pdf";
 import {
+  exportPagesAsImages,
+  extractPdfText,
+  imagesToPdf,
+  type ImageFormat,
+} from "./convert";
+import {
   loadSignatures,
   persistSignatures,
   type Annotation,
@@ -86,6 +92,11 @@ interface PdfState {
 
   save: () => Promise<void>;
   saveAs: () => Promise<void>;
+
+  // Phase 5a: conversion
+  exportImages: (format: ImageFormat) => Promise<void>;
+  exportText: () => Promise<void>;
+  imagesToPdfDialog: () => Promise<void>;
 }
 
 async function reloadDoc(
@@ -501,6 +512,82 @@ export const usePdfStore = create<PdfState>((set, get) => ({
         dirty: false,
         busy: false,
       });
+    } catch (e) {
+      set({ busy: false, error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  exportImages: async (format) => {
+    const { doc, filePath } = get();
+    if (!doc) return;
+    set({ busy: true, error: null });
+    try {
+      const dir = await open({
+        directory: true,
+        multiple: false,
+        title: "Choose a folder for the exported pages",
+      });
+      if (!dir) {
+        set({ busy: false });
+        return;
+      }
+      const base =
+        filePath?.split(/[\\/]/).pop()?.replace(/\.pdf$/i, "") ?? "document";
+      await exportPagesAsImages(doc, dir, base, format, 2);
+      set({ busy: false });
+    } catch (e) {
+      set({ busy: false, error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  exportText: async () => {
+    const { doc, filePath } = get();
+    if (!doc) return;
+    set({ busy: true, error: null });
+    try {
+      const text = await extractPdfText(doc);
+      const defaultName = filePath
+        ? filePath.replace(/\.pdf$/i, ".txt")
+        : "document.txt";
+      const target = await save({
+        defaultPath: defaultName,
+        filters: [{ name: "Text", extensions: ["txt"] }],
+      });
+      if (!target) {
+        set({ busy: false });
+        return;
+      }
+      await writeFile(target, new TextEncoder().encode(text));
+      set({ busy: false });
+    } catch (e) {
+      set({ busy: false, error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  imagesToPdfDialog: async () => {
+    set({ busy: true, error: null });
+    try {
+      const selected = await open({
+        multiple: true,
+        filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg"] }],
+        title: "Pick images to combine into a PDF",
+      });
+      if (!selected || (Array.isArray(selected) && selected.length === 0)) {
+        set({ busy: false });
+        return;
+      }
+      const paths = Array.isArray(selected) ? selected : [selected];
+      const out = await imagesToPdf(paths);
+      const target = await save({
+        defaultPath: "images.pdf",
+        filters: [{ name: "PDF", extensions: ["pdf"] }],
+      });
+      if (!target) {
+        set({ busy: false });
+        return;
+      }
+      await writePdf(target, out);
+      set({ busy: false });
     } catch (e) {
       set({ busy: false, error: e instanceof Error ? e.message : String(e) });
     }

@@ -1,4 +1,6 @@
+import { useRef, useState } from "react";
 import { usePdfStore } from "../lib/store";
+import { ContextMenu, type MenuItem } from "./ContextMenu";
 
 export function Toolbar() {
   const {
@@ -18,7 +20,46 @@ export function Toolbar() {
     mergeFromDialog,
     insertBlankAt,
     splitAt,
+    exportImages,
+    exportText,
+    imagesToPdfDialog,
   } = usePdfStore();
+
+  const exportBtnRef = useRef<HTMLButtonElement | null>(null);
+  const [exportMenu, setExportMenu] = useState<{ x: number; y: number } | null>(null);
+
+  const fileName = filePath ? filePath.split(/[\\/]/).pop() : null;
+  const hasDoc = numPages > 0;
+
+  const openExportMenu = () => {
+    const rect = exportBtnRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setExportMenu({ x: rect.left, y: rect.bottom + 4 });
+  };
+
+  const exportItems: (MenuItem | "sep")[] = [
+    {
+      label: "Export pages as PNG…",
+      onClick: () => exportImages("png"),
+      disabled: busy || !hasDoc,
+    },
+    {
+      label: "Export pages as JPEG…",
+      onClick: () => exportImages("jpeg"),
+      disabled: busy || !hasDoc,
+    },
+    {
+      label: "Export text…",
+      onClick: () => exportText(),
+      disabled: busy || !hasDoc,
+    },
+    "sep",
+    {
+      label: "Create PDF from images…",
+      onClick: () => imagesToPdfDialog(),
+      disabled: busy,
+    },
+  ];
 
   const onSplit = () => {
     const input = window.prompt(
@@ -33,9 +74,6 @@ export function Toolbar() {
     }
     splitAt(n);
   };
-
-  const fileName = filePath ? filePath.split(/[\\/]/).pop() : null;
-  const hasDoc = numPages > 0;
 
   return (
     <header className="toolbar">
@@ -111,10 +149,30 @@ export function Toolbar() {
         </>
       )}
 
+      <div className="toolbar-group">
+        <button
+          ref={exportBtnRef}
+          onClick={openExportMenu}
+          disabled={busy}
+          title="Convert / export"
+        >
+          Export ▾
+        </button>
+      </div>
+
       <div className="toolbar-group right">
         {dirty && <span className="dirty-dot" title="Unsaved changes">●</span>}
         {fileName && <span className="filename">{fileName}</span>}
       </div>
+
+      {exportMenu && (
+        <ContextMenu
+          x={exportMenu.x}
+          y={exportMenu.y}
+          items={exportItems}
+          onClose={() => setExportMenu(null)}
+        />
+      )}
     </header>
   );
 }

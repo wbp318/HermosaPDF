@@ -34,6 +34,11 @@ interface PdfState {
   busy: boolean;
   dirty: boolean;
   error: string | null;
+  // Persistent identity for each current page position (1-indexed by position).
+  // Starts as 1..N; reorders/deletes/inserts/merges keep each existing page's
+  // identity label stable so a page that originated at position 2 still shows
+  // "2" after it's moved.
+  pageIds: number[];
 
   openFromDialog: () => Promise<void>;
   setPage: (n: number) => void;
@@ -79,6 +84,7 @@ export const usePdfStore = create<PdfState>((set, get) => ({
   busy: false,
   dirty: false,
   error: null,
+  pageIds: [],
 
   openFromDialog: async () => {
     set({ loading: true, error: null });
@@ -134,6 +140,7 @@ export const usePdfStore = create<PdfState>((set, get) => ({
         currentPage: 1,
         dirty: false,
         loading: false,
+        pageIds: Array.from({ length: doc.numPages }, (_, i) => i + 1),
       });
     } catch (e) {
       set({ loading: false, error: e instanceof Error ? e.message : String(e) });
@@ -159,11 +166,12 @@ export const usePdfStore = create<PdfState>((set, get) => ({
       currentPage: 1,
       dirty: false,
       error: null,
+      pageIds: [],
     });
   },
 
   deletePage: async (pageIndex) => {
-    const { bytes, doc, currentPage, numPages } = get();
+    const { bytes, doc, currentPage, numPages, pageIds } = get();
     if (!bytes || numPages <= 1) return;
     set({ busy: true, error: null });
     try {
@@ -171,6 +179,7 @@ export const usePdfStore = create<PdfState>((set, get) => ({
       const newDoc = await reloadDoc(doc, next);
       const newNum = newDoc.numPages;
       const newCurrent = Math.min(currentPage, newNum);
+      const newPageIds = pageIds.filter((_, i) => i !== pageIndex);
       set({
         bytes: next,
         doc: newDoc,
@@ -178,6 +187,7 @@ export const usePdfStore = create<PdfState>((set, get) => ({
         currentPage: newCurrent,
         dirty: true,
         busy: false,
+        pageIds: newPageIds,
       });
     } catch (e) {
       set({ busy: false, error: e instanceof Error ? e.message : String(e) });
@@ -198,18 +208,25 @@ export const usePdfStore = create<PdfState>((set, get) => ({
   },
 
   insertBlankAt: async (atIndex) => {
-    const { bytes, doc } = get();
+    const { bytes, doc, pageIds } = get();
     if (!bytes) return;
     set({ busy: true, error: null });
     try {
       const next = await insertBlankPageBytes(bytes, atIndex);
       const newDoc = await reloadDoc(doc, next);
+      const newId = (pageIds.length ? Math.max(...pageIds) : 0) + 1;
+      const newPageIds = [
+        ...pageIds.slice(0, atIndex),
+        newId,
+        ...pageIds.slice(atIndex),
+      ];
       set({
         bytes: next,
         doc: newDoc,
         numPages: newDoc.numPages,
         dirty: true,
         busy: false,
+        pageIds: newPageIds,
       });
     } catch (e) {
       set({ busy: false, error: e instanceof Error ? e.message : String(e) });
@@ -217,7 +234,7 @@ export const usePdfStore = create<PdfState>((set, get) => ({
   },
 
   mergeFromDialog: async () => {
-    const { bytes, doc } = get();
+    const { bytes, doc, pageIds } = get();
     if (!bytes) return;
     set({ busy: true, error: null });
     try {
@@ -232,12 +249,19 @@ export const usePdfStore = create<PdfState>((set, get) => ({
       const otherBytes = await readFile(selected);
       const next = await mergeAppendBytes(bytes, otherBytes);
       const newDoc = await reloadDoc(doc, next);
+      const baseMax = pageIds.length ? Math.max(...pageIds) : 0;
+      const appendedCount = newDoc.numPages - pageIds.length;
+      const newPageIds = [
+        ...pageIds,
+        ...Array.from({ length: appendedCount }, (_, i) => baseMax + i + 1),
+      ];
       set({
         bytes: next,
         doc: newDoc,
         numPages: newDoc.numPages,
         dirty: true,
         busy: false,
+        pageIds: newPageIds,
       });
     } catch (e) {
       set({ busy: false, error: e instanceof Error ? e.message : String(e) });
@@ -269,18 +293,20 @@ export const usePdfStore = create<PdfState>((set, get) => ({
   },
 
   reorderPages: async (newOrder) => {
-    const { bytes, doc } = get();
+    const { bytes, doc, pageIds } = get();
     if (!bytes) return;
     set({ busy: true, error: null });
     try {
       const next = await reorderPagesBytes(bytes, newOrder);
       const newDoc = await reloadDoc(doc, next);
+      const newPageIds = newOrder.map((i) => pageIds[i] ?? i + 1);
       set({
         bytes: next,
         doc: newDoc,
         numPages: newDoc.numPages,
         dirty: true,
         busy: false,
+        pageIds: newPageIds,
       });
     } catch (e) {
       set({ busy: false, error: e instanceof Error ? e.message : String(e) });
@@ -292,12 +318,11 @@ export const usePdfStore = create<PdfState>((set, get) => ({
     if (fromPageNumber === toPageNumber) return;
     if (fromPageNumber < 1 || fromPageNumber > numPages) return;
     if (toPageNumber < 1 || toPageNumber > numPages) return;
-    const order: number[] = [];
-    for (let i = 1; i <= numPages; i++) {
-      if (i === fromPageNumber) continue;
-      if (i === toPageNumber) order.push(fromPageNumber - 1);
-      order.push(i - 1);
-    }
+    const fromIdx = fromPageNumber - 1;
+    const toIdx = toPageNumber - 1;
+    const order = Array.from({ length: numPages }, (_, i) => i);
+    const [moved] = order.splice(fromIdx, 1);
+    order.splice(toIdx, 0, moved);
     await get().reorderPages(order);
     set({ currentPage: toPageNumber });
   },

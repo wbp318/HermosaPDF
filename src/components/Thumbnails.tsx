@@ -6,7 +6,11 @@ import { ContextMenu, type MenuItem } from "./ContextMenu";
 import { devMenuItems } from "../lib/devtools";
 
 const THUMB_SCALE = 0.2;
-const DRAG_MIME = "application/x-hermosapdf-page";
+
+// Module-scoped handoff — WebView2 sometimes strips custom MIME types on
+// dataTransfer, so we track the dragged page here instead of round-tripping
+// through the drag payload.
+let draggingPageNumber: number | null = null;
 
 function Thumbnail({
   pageNumber,
@@ -24,6 +28,7 @@ function Thumbnail({
   const deletePage = usePdfStore((s) => s.deletePage);
   const extractPagesToFile = usePdfStore((s) => s.extractPagesToFile);
   const movePage = usePdfStore((s) => s.movePage);
+  const label = usePdfStore((s) => s.pageIds[pageNumber - 1] ?? pageNumber);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dragState, setDragState] = useState<"none" | "dragging" | "over">("none");
 
@@ -52,17 +57,23 @@ function Thumbnail({
       return;
     }
     e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData(DRAG_MIME, String(pageNumber));
+    // setData is required by Firefox; value itself is ignored — we use the
+    // module-scoped draggingPageNumber instead.
+    e.dataTransfer.setData("text/plain", String(pageNumber));
+    draggingPageNumber = pageNumber;
     setDragState("dragging");
   };
 
-  const onDragEnd = () => setDragState("none");
+  const onDragEnd = () => {
+    draggingPageNumber = null;
+    setDragState("none");
+  };
 
   const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    if (!e.dataTransfer.types.includes(DRAG_MIME)) return;
+    if (draggingPageNumber === null) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
-    setDragState("over");
+    if (draggingPageNumber !== pageNumber) setDragState("over");
   };
 
   const onDragLeave = () => setDragState((s) => (s === "over" ? "none" : s));
@@ -70,9 +81,9 @@ function Thumbnail({
   const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragState("none");
-    const raw = e.dataTransfer.getData(DRAG_MIME);
-    const from = Number(raw);
-    if (!from || from === pageNumber) return;
+    const from = draggingPageNumber;
+    draggingPageNumber = null;
+    if (from === null || from === pageNumber) return;
     movePage(from, pageNumber);
   };
 
@@ -97,8 +108,8 @@ function Thumbnail({
         onRequestMenu(pageNumber, e.clientX, e.clientY);
       }}
     >
-      <canvas ref={canvasRef} />
-      <div className="thumb-label">{pageNumber}</div>
+      <canvas ref={canvasRef} draggable={false} />
+      <div className="thumb-label">{label}</div>
       <div className="thumb-actions" onClick={stop}>
         <button
           title="Rotate 90° counter-clockwise"

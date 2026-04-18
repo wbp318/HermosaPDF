@@ -119,6 +119,12 @@ interface PdfState {
   runOcr: () => Promise<void>;
   clearOcr: () => void;
   dismissNotice: () => void;
+
+  // Phase 7: AI
+  aiPanelOpen: boolean;
+  aiModel: "haiku" | "sonnet" | "opus";
+  toggleAiPanel: () => void;
+  setAiModel: (m: "haiku" | "sonnet" | "opus") => void;
 }
 
 async function reloadDoc(
@@ -160,6 +166,14 @@ export const usePdfStore = create<PdfState>((set, get) => ({
   ocrSkippedPages: [],
   ocrOcrdPages: [],
   notice: null,
+  aiPanelOpen: false,
+  aiModel: (typeof localStorage !== "undefined" &&
+    (localStorage.getItem("hermosapdf.aiModel") as
+      | "haiku"
+      | "sonnet"
+      | "opus"
+      | null)) ||
+    "haiku",
 
   openFromDialog: async () => {
     set({ loading: true, error: null });
@@ -642,6 +656,15 @@ export const usePdfStore = create<PdfState>((set, get) => ({
     }),
 
   dismissNotice: () => set({ notice: null }),
+
+  toggleAiPanel: () => set((s) => ({ aiPanelOpen: !s.aiPanelOpen })),
+
+  setAiModel: (m) => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("hermosapdf.aiModel", m);
+    }
+    set({ aiModel: m });
+  },
 
   imagesToPdfDialog: async () => {
     set({ busy: true, error: null });

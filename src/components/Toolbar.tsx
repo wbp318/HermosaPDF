@@ -28,6 +28,8 @@ export function Toolbar() {
     clearOcr,
     notice,
     dismissNotice,
+    aiPanelOpen,
+    toggleAiPanel,
   } = usePdfStore();
 
   const exportBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -176,6 +178,13 @@ export function Toolbar() {
           title="Convert / export"
         >
           Export ▾
+        </button>
+        <button
+          onClick={toggleAiPanel}
+          className={aiPanelOpen ? "active" : undefined}
+          title="AI document analysis"
+        >
+          AI
         </button>
       </div>
 

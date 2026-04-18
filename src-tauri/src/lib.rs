@@ -1,3 +1,4 @@
+mod ai;
 mod pdfops;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -9,6 +10,9 @@ pub fn run() {
             pdfops::pdf_decrypt,
             pdfops::pdf_is_encrypted,
             pdfops::open_devtools,
+            ai::ai_set_api_key,
+            ai::ai_get_api_key,
+            ai::ai_clear_api_key,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

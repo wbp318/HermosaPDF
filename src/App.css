@@ -145,6 +145,15 @@ body,
   border-color: var(--accent);
 }
 
+.thumb.dragging {
+  opacity: 0.4;
+}
+
+.thumb.drag-over {
+  border-color: var(--accent-hover);
+  box-shadow: inset 0 3px 0 0 var(--accent);
+}
+
 .thumb canvas {
   max-width: 100%;
   display: block;

@@ -17,7 +17,22 @@ export function Toolbar() {
     saveAs,
     mergeFromDialog,
     insertBlankAt,
+    splitAt,
   } = usePdfStore();
+
+  const onSplit = () => {
+    const input = window.prompt(
+      `Split after which page? (1–${numPages - 1})`,
+      String(Math.max(1, Math.floor(numPages / 2))),
+    );
+    if (!input) return;
+    const n = Number(input);
+    if (!Number.isFinite(n) || n < 1 || n >= numPages) {
+      window.alert(`Invalid split point. Must be between 1 and ${numPages - 1}.`);
+      return;
+    }
+    splitAt(n);
+  };
 
   const fileName = filePath ? filePath.split(/[\\/]/).pop() : null;
   const hasDoc = numPages > 0;
@@ -84,6 +99,13 @@ export function Toolbar() {
             </button>
             <button onClick={mergeFromDialog} disabled={busy} title="Append another PDF">
               Merge…
+            </button>
+            <button
+              onClick={onSplit}
+              disabled={busy || numPages < 2}
+              title="Split into two PDFs at a chosen page"
+            >
+              Split…
             </button>
           </div>
         </>

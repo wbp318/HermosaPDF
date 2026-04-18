@@ -6,6 +6,7 @@ import { ContextMenu, type MenuItem } from "./ContextMenu";
 import { devMenuItems } from "../lib/devtools";
 
 const THUMB_SCALE = 0.2;
+const DRAG_MIME = "application/x-hermosapdf-page";
 
 function Thumbnail({
   pageNumber,
@@ -22,7 +23,9 @@ function Thumbnail({
   const rotatePage = usePdfStore((s) => s.rotatePage);
   const deletePage = usePdfStore((s) => s.deletePage);
   const extractPagesToFile = usePdfStore((s) => s.extractPagesToFile);
+  const movePage = usePdfStore((s) => s.movePage);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [dragState, setDragState] = useState<"none" | "dragging" | "over">("none");
 
   useEffect(() => {
     if (!doc) return;
@@ -43,9 +46,50 @@ function Thumbnail({
 
   const stop = (e: React.MouseEvent) => e.stopPropagation();
 
+  const onDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    if (busy) {
+      e.preventDefault();
+      return;
+    }
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData(DRAG_MIME, String(pageNumber));
+    setDragState("dragging");
+  };
+
+  const onDragEnd = () => setDragState("none");
+
+  const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!e.dataTransfer.types.includes(DRAG_MIME)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragState("over");
+  };
+
+  const onDragLeave = () => setDragState((s) => (s === "over" ? "none" : s));
+
+  const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragState("none");
+    const raw = e.dataTransfer.getData(DRAG_MIME);
+    const from = Number(raw);
+    if (!from || from === pageNumber) return;
+    movePage(from, pageNumber);
+  };
+
   return (
     <div
-      className={clsx("thumb", currentPage === pageNumber && "active")}
+      className={clsx(
+        "thumb",
+        currentPage === pageNumber && "active",
+        dragState === "dragging" && "dragging",
+        dragState === "over" && "drag-over",
+      )}
+      draggable={!busy}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
       onClick={() => setPage(pageNumber)}
       onContextMenu={(e) => {
         e.preventDefault();

@@ -46,6 +46,8 @@ interface PdfState {
   mergeFromDialog: () => Promise<void>;
   extractPagesToFile: (pageIndices: number[]) => Promise<void>;
   reorderPages: (newOrder: number[]) => Promise<void>;
+  movePage: (fromPageNumber: number, toPageNumber: number) => Promise<void>;
+  splitAt: (afterPage: number) => Promise<void>;
 
   save: () => Promise<void>;
   saveAs: () => Promise<void>;
@@ -280,6 +282,63 @@ export const usePdfStore = create<PdfState>((set, get) => ({
         dirty: true,
         busy: false,
       });
+    } catch (e) {
+      set({ busy: false, error: e instanceof Error ? e.message : String(e) });
+    }
+  },
+
+  movePage: async (fromPageNumber, toPageNumber) => {
+    const { numPages } = get();
+    if (fromPageNumber === toPageNumber) return;
+    if (fromPageNumber < 1 || fromPageNumber > numPages) return;
+    if (toPageNumber < 1 || toPageNumber > numPages) return;
+    const order: number[] = [];
+    for (let i = 1; i <= numPages; i++) {
+      if (i === fromPageNumber) continue;
+      if (i === toPageNumber) order.push(fromPageNumber - 1);
+      order.push(i - 1);
+    }
+    await get().reorderPages(order);
+    set({ currentPage: toPageNumber });
+  },
+
+  splitAt: async (afterPage) => {
+    const { bytes, numPages, filePath } = get();
+    if (!bytes || afterPage < 1 || afterPage >= numPages) return;
+    set({ busy: true, error: null });
+    try {
+      const firstIndices = Array.from({ length: afterPage }, (_, i) => i);
+      const secondIndices = Array.from(
+        { length: numPages - afterPage },
+        (_, i) => i + afterPage,
+      );
+      const firstBytes = await extractPagesBytes(bytes, firstIndices);
+      const secondBytes = await extractPagesBytes(bytes, secondIndices);
+
+      const base = filePath
+        ? filePath.replace(/\.pdf$/i, "")
+        : "document";
+      const firstDefault = `${base} (pages 1-${afterPage}).pdf`;
+      const secondDefault = `${base} (pages ${afterPage + 1}-${numPages}).pdf`;
+
+      const firstTarget = await save({
+        defaultPath: firstDefault,
+        filters: [{ name: "PDF", extensions: ["pdf"] }],
+      });
+      if (!firstTarget) {
+        set({ busy: false });
+        return;
+      }
+      await writePdf(firstTarget, firstBytes);
+
+      const secondTarget = await save({
+        defaultPath: secondDefault,
+        filters: [{ name: "PDF", extensions: ["pdf"] }],
+      });
+      if (secondTarget) {
+        await writePdf(secondTarget, secondBytes);
+      }
+      set({ busy: false });
     } catch (e) {
       set({ busy: false, error: e instanceof Error ? e.message : String(e) });
     }

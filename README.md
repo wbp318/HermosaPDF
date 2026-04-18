@@ -3,7 +3,7 @@
 Personal PDF editing suite — a desktop app that covers what Adobe Acrobat does,
 wearing a Windows 98 skin with phosphor-green accents.
 
-> **Copyright © 2026 Levee Line Research LLC.** All rights reserved. HermosaPDF is
+> **Copyright © 2026 William Brooks Parker.** All rights reserved. HermosaPDF is
 > proprietary software distributed under the terms of [LICENSE.md](LICENSE.md).
 > Third-party open-source components are listed in [NOTICE.md](NOTICE.md).
 

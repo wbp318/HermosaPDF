@@ -6,7 +6,7 @@ their respective licenses, not under HermosaPDF’s proprietary license.
 A copy of each license is reproduced in each component’s repository or
 within the component’s distribution files.
 
-© 2026 Levee Line Research LLC. The HermosaPDF application as a whole is
+© 2026 William Brooks Parker. The HermosaPDF application as a whole is
 licensed under `LICENSE.md`. This file acknowledges the open-source
 libraries HermosaPDF depends on.
 

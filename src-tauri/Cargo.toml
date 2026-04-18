@@ -2,7 +2,7 @@
 name = "hermosa_pdf"
 version = "0.1.0"
 description = "HermosaPDF — personal PDF editing suite"
-authors = ["Levee Line Research LLC"]
+authors = ["William Brooks Parker"]
 edition = "2021"
 license-file = "../LICENSE.md"
 

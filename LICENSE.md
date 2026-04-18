@@ -1,14 +1,20 @@
 # HERMOSAPDF SOFTWARE LICENSE AGREEMENT
 
-**Copyright © 2026 Levee Line Research LLC. All rights reserved.**
+**Copyright © 2026 William Brooks Parker. All rights reserved.**
 
-Levee Line Research LLC (“Licensor”) is a limited liability company domiciled
-in East Carroll Parish, Louisiana. This Software License Agreement (the
-“Agreement”) is a legally binding contract between you — whether an
-individual, a family farm enterprise, a law firm, or other legal entity
-(collectively, “Licensee”) — and Licensor, governing your use of the
-HermosaPDF computer program, including all executables, object code, source
-files, documentation, and updates (collectively, the “Software”).
+William Brooks Parker (“Licensor”) is a natural person domiciled in
+East Carroll Parish, Louisiana, United States of America. This Software
+License Agreement (the “Agreement”) is a legally binding contract
+between you — whether an individual, a family farm enterprise, a law
+firm, or other legal entity (collectively, “Licensee”) — and Licensor,
+governing your use of the HermosaPDF computer program, including all
+executables, object code, source files, documentation, and updates
+(collectively, the “Software”).
+
+Licensor may in the future assign Licensor’s rights and obligations
+under this Agreement to a successor entity, including a limited
+liability company formed by Licensor. Section 14.5 of this Agreement
+reserves that right.
 
 BY DOWNLOADING, INSTALLING, COPYING, OR OTHERWISE USING THE SOFTWARE, LICENSEE
 EXPRESSLY ACCEPTS AND AGREES TO BE BOUND BY THE TERMS OF THIS AGREEMENT. IF
@@ -216,8 +222,8 @@ LIMITED TO THE MAXIMUM PERIOD PERMITTED BY LAW.
 ## 9. Limitation of Liability
 
 9.1 **Exclusion of Damages.** TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE
-LAW, IN NO EVENT SHALL LICENSOR (OR ITS OFFICERS, MANAGERS, MEMBERS,
-EMPLOYEES, AGENTS, CONTRACTORS, LICENSORS, SUPPLIERS, OR AFFILIATES) BE
+LAW, IN NO EVENT SHALL LICENSOR (OR LICENSOR’S AGENTS, CONTRACTORS,
+LICENSORS, SUPPLIERS, REPRESENTATIVES, HEIRS, SUCCESSORS, OR ASSIGNS) BE
 LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, CONSEQUENTIAL,
 PUNITIVE, OR COVER DAMAGES, INCLUDING (WITHOUT LIMITATION) LOST PROFITS,
 LOST REVENUE, LOST SAVINGS, LOSS OF BUSINESS, LOSS OF GOODWILL, LOSS OR
@@ -244,12 +250,12 @@ liability that may not lawfully be limited under Louisiana law.
 
 ## 10. Indemnification
 
-Licensee shall indemnify, defend, and hold harmless Licensor and its
-officers, managers, members, employees, agents, contractors, and
-affiliates from and against any and all claims, demands, suits, causes
-of action, damages, losses, judgments, fines, penalties, costs, and
-expenses (including reasonable attorneys’ fees) arising out of or relating
-to (a) Licensee’s use or misuse of the Software in violation of this
+Licensee shall indemnify, defend, and hold harmless Licensor and
+Licensor’s agents, contractors, representatives, heirs, successors, and
+assigns from and against any and all claims, demands, suits, causes of
+action, damages, losses, judgments, fines, penalties, costs, and expenses
+(including reasonable attorneys’ fees) arising out of or relating to
+(a) Licensee’s use or misuse of the Software in violation of this
 Agreement, (b) Licensee’s violation of any applicable law, or (c)
 Licensee’s violation of any right of a third party, including any
 intellectual-property, publicity, privacy, or contract right.
@@ -371,11 +377,16 @@ provisions shall remain in full force and effect.
 provision of this Agreement shall not constitute a waiver of that right
 or provision.
 
-14.5 **Assignment.** Licensee may not assign or transfer this Agreement or
-any rights or obligations hereunder, whether by operation of law, merger,
-acquisition, sale of assets, or otherwise, without the prior written
-consent of Licensor; any attempted assignment in violation of this
-section is void. Licensor may assign this Agreement without restriction.
+14.5 **Assignment.** Licensee may not assign or transfer this Agreement
+or any rights or obligations hereunder, whether by operation of law,
+merger, acquisition, sale of assets, or otherwise, without the prior
+written consent of Licensor; any attempted assignment in violation of
+this section is void. Licensor may assign or transfer this Agreement,
+in whole or in part, without restriction and without notice, including
+without limitation to a limited liability company, corporation, or
+other business entity formed by Licensor, to any successor in interest
+by operation of law, and to any purchaser of substantially all of the
+assets associated with the Software.
 
 14.6 **Relationship.** The parties are independent contractors. This
 Agreement does not create any partnership, joint venture, agency,
@@ -401,7 +412,7 @@ drafted this Agreement.
 
 ## 15. Contact
 
-Levee Line Research LLC
+William Brooks Parker (Licensor)
 East Carroll Parish, Louisiana
 United States of America
 

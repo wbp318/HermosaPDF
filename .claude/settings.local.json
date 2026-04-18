@@ -44,7 +44,8 @@
       "Bash(gh release create v0.1.0 --title 'HermosaPDF v0.1.0' --notes ' *)",
       "Bash(grep -iE \"\\\\.env|secret|credential|\\\\.key|\\\\.pem|\\\\.p12|\\\\.pfx|token|password|\\\\.sqlite|\\\\.db$\")",
       "Bash(git grep *)",
-      "Bash(grep -E \"sk-ant-[A-Za-z0-9_-]{30,}|sk-proj-[A-Za-z0-9_-]{30,}\")"
+      "Bash(grep -E \"sk-ant-[A-Za-z0-9_-]{30,}|sk-proj-[A-Za-z0-9_-]{30,}\")",
+      "Bash(git commit *)"
     ]
   }
 }

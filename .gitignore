@@ -1,4 +1,14 @@
-# Logs
+# === Build output ===
+node_modules
+dist
+dist-ssr
+*.local
+/target/
+
+# Tauri bundle output lives under src-tauri/target which has its own
+# gitignore; /target/ here covers anyone running cargo from repo root.
+
+# === Logs ===
 logs
 *.log
 npm-debug.log*
@@ -6,20 +16,62 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+dev.log
+build.log
 
-node_modules
-dist
-dist-ssr
-*.local
+# === Secrets / credentials ===
+# API keys are stored in the OS keychain via Rust, never in files — but
+# this slams the door on .env files or test certs being committed by mistake.
+.env
+.env.*
+!.env.example
+secrets.json
+credentials.json
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+*.keystore
+*.jks
 
-# Editor directories and files
+# Vendor-specific tool caches that sometimes persist tokens
+.anthropic/
+.openai/
+.claude-tool/
+
+# === Editor / IDE cruft ===
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-dev.log
+*~
+*.bak
+*.tmp
+*.swp
+*.swo
+
+# === OS cruft ===
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# === Python leftovers (old scripts archived — don't want stray venv / pycache) ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.venv/
+
+# === Local databases (reserved for future use) ===
+*.sqlite
+*.sqlite3
+*.db

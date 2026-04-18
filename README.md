@@ -1,47 +1,58 @@
-# PDF to Pretty
+# HermosaPDF
 
-## Description
-PDF to Pretty is a Python-based tool that enhances the visual appeal of PDF documents. It adds colorful backgrounds, improves text formatting, and creates a more aesthetically pleasing version of your original PDF.
+A personal PDF editing suite — a desktop app covering what Adobe Acrobat does:
+text/image editing, page organization, conversion to/from PDF, e-signatures, OCR,
+and AI-assisted document analysis.
 
-## Features
-- Adds a light blue background to each page
-- Applies a blue border around the content
-- Renders text in navy color with improved formatting
-- Removes line numbers from the original PDF (if present)
-- Preserves all original content while enhancing visual appeal
+> Prior Python scripts are preserved under `archive/`.
 
-## Requirements
-- Python 3.7+
-- PyMuPDF (fitz)
-- reportlab
+## Stack
 
-## Installation
-1. Clone this repository:
-   ```
-   git clone https://github.com/wbp318/pdf_to_pretty.git
-   cd pdf_to_pretty
-   ```
-2. Create and activate a virtual environment:
-   ```
-   python -m venv venv
-   .\venv\Scripts\Activate  # On Windows
-   source venv/bin/activate  # On macOS/Linux
-   ```
-3. Install required packages:
-   ```
-   pip install PyMuPDF reportlab
-   ```
+- **Tauri v2** — Rust backend, system WebView2 on Windows
+- **React 19 + TypeScript + Vite** — UI
+- **pdfjs-dist** — rendering
+- **pdf-lib** — page manipulation
+- **lopdf (Rust)** — decryption and structural normalization
+- **tesseract.js** *(later)* — OCR
+- **@anthropic-ai/sdk** *(later)* — AI features via Claude
 
-## Usage
-1. Place your input PDF in the project directory.
-2. Run the script:
-   ```
-   python pdf_to_pretty.py
-   ```
-3. Find the enhanced PDF in the project directory as 'enhanced_output.pdf'.
+## Prerequisites (Windows)
 
-## Contributing
-Contributions, issues, and feature requests are welcome. Feel free to check issues page if you want to contribute.
+1. Node.js 20+
+2. Rust (install via [rustup](https://www.rust-lang.org/learn/get-started))
+3. Visual Studio 2022 Build Tools with "Desktop development with C++" workload
+4. Windows 11 SDK (install via the VS Installer if not already present)
 
-## License
-[MIT](https://choosealicense.com/licenses/mit/)
+## Develop
+
+```bash
+npm install
+npm run tauri dev
+```
+
+The first `tauri dev` compiles the Rust dependencies; subsequent runs are fast.
+
+## Build a release
+
+```bash
+npm run tauri build
+```
+
+Produces a Windows installer under `src-tauri/target/release/bundle/`.
+
+## Roadmap
+
+1. ✅ Phase 1 — PDF viewer with thumbnails, open/close, zoom, paging
+2. Phase 2 — Page ops: rotate, delete, insert blank, extract, merge *(in progress)*; reorder and split still to come
+3. Phase 3 — Annotations + text/image editing
+4. Phase 4 — E-signatures (draw/type/upload, place, flatten)
+5. Phase 5 — File conversion (PDF ↔ images, Word/HTML → PDF)
+6. Phase 6 — OCR (Tesseract, searchable-PDF output)
+7. Phase 7 — AI document analysis (Claude: summarize, Q&A, extract, redact)
+
+## Notes on encrypted PDFs
+
+Every PDF opened is first round-tripped through the Rust `pdf_decrypt` command
+(backed by `lopdf`), which transparently decrypts owner-password–only PDFs and
+emits a normalized output for the JS layer. Password-protected PDFs get a native
+prompt.

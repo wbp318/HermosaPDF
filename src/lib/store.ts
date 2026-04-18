@@ -10,8 +10,10 @@ import {
   mergeAppend as mergeAppendBytes,
   extractPages as extractPagesBytes,
   reorderPages as reorderPagesBytes,
+  flattenAnnotations,
   type PDFDocumentProxy,
 } from "./pdf";
+import type { Annotation, Tool } from "./annotations";
 
 async function normalizePdfBytes(bytes: Uint8Array, password?: string): Promise<Uint8Array> {
   // Round-trip through Rust (lopdf) to decrypt if needed and normalize the
@@ -39,6 +41,21 @@ interface PdfState {
   // identity label stable so a page that originated at position 2 still shows
   // "2" after it's moved.
   pageIds: number[];
+
+  // Annotation layer state
+  tool: Tool;
+  annotations: Annotation[];
+  selectedAnnotationId: string | null;
+  annotationColor: string;
+  strokeWidth: number;
+
+  setTool: (t: Tool) => void;
+  addAnnotation: (a: Annotation) => void;
+  updateAnnotation: (id: string, patch: Partial<Annotation>) => void;
+  removeAnnotation: (id: string) => void;
+  setSelectedAnnotation: (id: string | null) => void;
+  setAnnotationColor: (c: string) => void;
+  setStrokeWidth: (w: number) => void;
 
   openFromDialog: () => Promise<void>;
   setPage: (n: number) => void;
@@ -85,6 +102,11 @@ export const usePdfStore = create<PdfState>((set, get) => ({
   dirty: false,
   error: null,
   pageIds: [],
+  tool: "select",
+  annotations: [],
+  selectedAnnotationId: null,
+  annotationColor: "#ff3b30",
+  strokeWidth: 2,
 
   openFromDialog: async () => {
     set({ loading: true, error: null });
@@ -167,8 +189,39 @@ export const usePdfStore = create<PdfState>((set, get) => ({
       dirty: false,
       error: null,
       pageIds: [],
+      annotations: [],
+      selectedAnnotationId: null,
+      tool: "select",
     });
   },
+
+  setTool: (t) => set({ tool: t, selectedAnnotationId: null }),
+
+  addAnnotation: (a) =>
+    set((s) => ({
+      annotations: [...s.annotations, a],
+      selectedAnnotationId: a.id,
+      dirty: true,
+    })),
+
+  updateAnnotation: (id, patch) =>
+    set((s) => ({
+      annotations: s.annotations.map((a) =>
+        a.id === id ? ({ ...a, ...patch } as Annotation) : a,
+      ),
+      dirty: true,
+    })),
+
+  removeAnnotation: (id) =>
+    set((s) => ({
+      annotations: s.annotations.filter((a) => a.id !== id),
+      selectedAnnotationId: s.selectedAnnotationId === id ? null : s.selectedAnnotationId,
+      dirty: true,
+    })),
+
+  setSelectedAnnotation: (id) => set({ selectedAnnotationId: id }),
+  setAnnotationColor: (c) => set({ annotationColor: c }),
+  setStrokeWidth: (w) => set({ strokeWidth: Math.max(0.5, Math.min(20, w)) }),
 
   deletePage: async (pageIndex) => {
     const { bytes, doc, currentPage, numPages, pageIds } = get();
@@ -370,22 +423,23 @@ export const usePdfStore = create<PdfState>((set, get) => ({
   },
 
   save: async () => {
-    const { bytes, filePath } = get();
+    const { bytes, filePath, annotations, pageIds } = get();
     if (!bytes) return;
     if (!filePath) {
       return get().saveAs();
     }
     set({ busy: true, error: null });
     try {
-      await writePdf(filePath, bytes);
-      set({ dirty: false, busy: false });
+      const out = await flattenAnnotations(bytes, annotations, pageIds);
+      await writePdf(filePath, out);
+      set({ bytes: out, annotations: [], dirty: false, busy: false });
     } catch (e) {
       set({ busy: false, error: e instanceof Error ? e.message : String(e) });
     }
   },
 
   saveAs: async () => {
-    const { bytes, filePath } = get();
+    const { bytes, filePath, annotations, pageIds } = get();
     if (!bytes) return;
     set({ busy: true, error: null });
     try {
@@ -397,8 +451,15 @@ export const usePdfStore = create<PdfState>((set, get) => ({
         set({ busy: false });
         return;
       }
-      await writePdf(target, bytes);
-      set({ filePath: target, dirty: false, busy: false });
+      const out = await flattenAnnotations(bytes, annotations, pageIds);
+      await writePdf(target, out);
+      set({
+        bytes: out,
+        annotations: [],
+        filePath: target,
+        dirty: false,
+        busy: false,
+      });
     } catch (e) {
       set({ busy: false, error: e instanceof Error ? e.message : String(e) });
     }

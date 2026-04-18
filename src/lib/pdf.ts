@@ -1,7 +1,8 @@
 import * as pdfjsLib from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
-import { PDFDocument, degrees } from "pdf-lib";
+import { PDFDocument, StandardFonts, degrees, rgb } from "pdf-lib";
+import type { Annotation } from "./annotations";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
@@ -119,6 +120,80 @@ export async function reorderPages(
     for (let i = d.getPageCount() - 1; i >= 0; i--) d.removePage(i);
     newOrder.forEach((oldIdx, newIdx) => d.insertPage(newIdx, pages[oldIdx]));
   });
+}
+
+function hexToRgb(hex: string) {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  return rgb(r, g, b);
+}
+
+/**
+ * Bake in-memory annotations into the PDF bytes. Annotations are keyed by
+ * pageId (our stable identity); pageIds maps current position → pageId.
+ * Coordinate convention inside the app is top-left (pdfjs). pdf-lib uses
+ * bottom-left, so we flip y against each page's height.
+ */
+export async function flattenAnnotations(
+  bytes: Uint8Array,
+  annotations: Annotation[],
+  pageIds: number[],
+): Promise<Uint8Array> {
+  if (annotations.length === 0) return bytes;
+  const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+
+  doc.getPages().forEach((page, idx) => {
+    const pageId = pageIds[idx];
+    if (pageId === undefined) return;
+    const pageAnns = annotations.filter((a) => a.pageId === pageId);
+    if (pageAnns.length === 0) return;
+    const { height } = page.getSize();
+
+    for (const a of pageAnns) {
+      if (a.type === "freehand") {
+        const color = hexToRgb(a.color);
+        const path = a.points
+          .map(
+            ([x, y], i) =>
+              `${i === 0 ? "M" : "L"} ${x.toFixed(2)} ${(height - y).toFixed(2)}`,
+          )
+          .join(" ");
+        page.drawSvgPath(path, {
+          borderColor: color,
+          borderWidth: a.width,
+          borderLineCap: 1,
+        });
+      } else if (a.type === "text") {
+        page.drawText(a.content, {
+          x: a.x,
+          y: height - a.y - a.fontSize,
+          size: a.fontSize,
+          color: hexToRgb(a.color),
+          font,
+        });
+      } else if (a.type === "sticky") {
+        const color = hexToRgb(a.color);
+        page.drawCircle({
+          x: a.x,
+          y: height - a.y,
+          size: 6,
+          color,
+        });
+        page.drawText(a.content, {
+          x: a.x + 12,
+          y: height - a.y - 4,
+          size: 10,
+          color: rgb(0.1, 0.1, 0.1),
+          font,
+        });
+      }
+    }
+  });
+
+  return doc.save();
 }
 
 export type { PDFDocumentProxy, PDFPageProxy };

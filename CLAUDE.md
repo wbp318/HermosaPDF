@@ -115,6 +115,7 @@ API key lives in the OS keychain, not the app. [src-tauri/src/ai.rs](src-tauri/s
 - OCR runner: [src/lib/ocr.ts](src/lib/ocr.ts)
 - Claude wrapper (summarize / ask / extract / redact): [src/lib/ai.ts](src/lib/ai.ts)
 - Global keyboard shortcuts: [src/lib/keyboard.ts](src/lib/keyboard.ts)
+- Dev-menu helper (Reload / Inspect element → `open_devtools` Tauri cmd): [src/lib/devtools.ts](src/lib/devtools.ts)
 - Tauri commands: [src-tauri/src/pdfops.rs](src-tauri/src/pdfops.rs) · [src-tauri/src/ai.rs](src-tauri/src/ai.rs) · [src-tauri/src/lib.rs](src-tauri/src/lib.rs)
 - Capabilities / permissions: [src-tauri/capabilities/default.json](src-tauri/capabilities/default.json)
 - Test PDF: [test-fixtures/agreement.pdf](test-fixtures/agreement.pdf) (regen via `scripts/generate-test-agreement.mjs`)
